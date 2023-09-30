@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment 
+metadata:
+  name: nodejs
+  labels:
+    app: nodejs
+spec:
+  selector:
+    matchLabels:
+      app: nodejs
+  template:
+    metadata:
+      labels:
+        app: nodejs
+    spec:
+      imagePullSecrets:
+      - name: mysecret
+
+      containers:
+      - name: nodejs
+        image: saad324/saad-docker:nodejs
+        ports:
+        - containerPort: 3000
+        imagePullPolicy: Always  
+        
+---
+
+apiVersion: v1
+kind: Service 
+metadata:
+  name: nodejs
+  labels:
+    app: nodejs
+spec:
+  type: ClusterIP
+  selector:
+    app: nodejs
+  ports:
+  - name: service
+    protocol: TCP
+    port: 3000
+    targetPort: 3000
+      
+---
+
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: monitoring-nodejs-app
+  labels:
+    release: monitoring
+    app: nodejs
+spec:
+  endpoints:
+  - path: /metrics
+    port: service 
+    targetPort: 3000
+  namespaceSelector:
+    matchNames:
+    - default
+  selector:
+    matchLabels:
+      app: nodejs
